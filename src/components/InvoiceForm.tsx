@@ -155,18 +155,20 @@ const InvoiceForm: React.FC = () => {
     try {
       // Prepare the data for submission
       const formData = new FormData();
-      formData.append('professionalData', JSON.stringify({
-        professionalName: data.professionalName,
-        professionalPhone: data.professionalPhone,
-        clients: clientEntries.map(entry => ({
-          clientName: entry.clientName,
-          clientPhone: entry.clientPhone,
-        }))
-      }));
       
+      // Add professional data
+      formData.append('professionalName', data.professionalName);
+      formData.append('professionalPhone', data.professionalPhone);
+      
+      // Add client data in a way that preserves the connection to invoices
       clientEntries.forEach((entry, index) => {
-        formData.append(`invoice_${index}`, entry.invoice[0]);
+        formData.append(`client_${index}_name`, entry.clientName);
+        formData.append(`client_${index}_phone`, entry.clientPhone);
+        formData.append(`client_${index}_invoice`, entry.invoice[0]);
       });
+      
+      // Add the number of clients for easier processing
+      formData.append('clientCount', clientEntries.length.toString());
       
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
         method: 'POST',
