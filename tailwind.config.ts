@@ -54,10 +54,11 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				ofair: {
-					DEFAULT: '#4361EE',
+					DEFAULT: '#0e3179', // Dark blue from the logo
 					foreground: '#FFFFFF',
 					light: '#D3E4FD',
-					dark: '#2C3E8C'
+					dark: '#0a235a',
+					accent: '#70e9cd' // The new primary color
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
