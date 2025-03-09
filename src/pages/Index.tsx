@@ -1,11 +1,34 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React from 'react';
+import Logo from '@/components/Logo';
+import InvoiceForm from '@/components/InvoiceForm';
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-b from-white to-ofair/5">
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center animate-fade-in">
+        <header className="w-full flex justify-between items-center mb-8">
+          <Logo />
+        </header>
+        
+        <main className="w-full max-w-4xl mx-auto flex flex-col items-center">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+              העלאת חשבוניות ל-oFair
+            </h1>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              ברוכים הבאים ל-oFair! כאן תוכלו להעלות חשבוניות על עבודות שביצעתם. אנא מלאו את הפרטים ושלחו את החשבונית בקלות.
+            </p>
+          </div>
+          
+          <div className="w-full bg-white shadow-lg rounded-xl p-6 md:p-8 border border-gray-100">
+            <InvoiceForm />
+          </div>
+        </main>
+        
+        <footer className="mt-16 text-center text-gray-500 text-sm">
+          <p>&copy; {new Date().getFullYear()} oFair. כל הזכויות שמורות.</p>
+        </footer>
       </div>
     </div>
   );
