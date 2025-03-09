@@ -167,11 +167,7 @@ const InvoiceForm: React.FC = () => {
         }))
       };
 
-      // For demonstration, we're just logging the data
-      console.log('Submitting to webhook:', submissionData);
 
-      In a real implementation, you would replace this with your webhook URL
-      and append all files to the FormData
       const formData = new FormData();
       formData.append('professionalData', JSON.stringify({
         professionalName: data.professionalName,
