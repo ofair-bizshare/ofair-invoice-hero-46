@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -155,19 +154,6 @@ const InvoiceForm: React.FC = () => {
 
     try {
       // Prepare the data for submission
-      const submissionData = {
-        professionalName: data.professionalName,
-        professionalPhone: data.professionalPhone,
-        clients: clientEntries.map(entry => ({
-          clientName: entry.clientName,
-          clientPhone: entry.clientPhone,
-          fileName: entry.invoice[0].name,
-          fileSize: entry.invoice[0].size,
-          fileType: entry.invoice[0].type
-        }))
-      };
-
-
       const formData = new FormData();
       formData.append('professionalData', JSON.stringify({
         professionalName: data.professionalName,
