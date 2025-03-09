@@ -74,8 +74,12 @@ const InvoiceForm: React.FC = () => {
       // Success case
       toast({
         title: "החשבונית נשלחה בהצלחה!",
-        description: "הנתונים התקבלו במערכת",
-        icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+        description: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span>הנתונים התקבלו במערכת</span>
+          </div>
+        ),
       });
       
       // Reset form
@@ -86,9 +90,13 @@ const InvoiceForm: React.FC = () => {
       console.error('Error submitting form:', error);
       toast({
         title: "שגיאה בשליחה",
-        description: "אנא נסו שוב מאוחר יותר",
+        description: (
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>אנא נסו שוב מאוחר יותר</span>
+          </div>
+        ),
         variant: "destructive",
-        icon: <AlertCircle className="h-5 w-5" />,
       });
     } finally {
       setIsSubmitting(false);
