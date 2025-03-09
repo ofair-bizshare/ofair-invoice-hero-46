@@ -170,28 +170,28 @@ const InvoiceForm: React.FC = () => {
       // For demonstration, we're just logging the data
       console.log('Submitting to webhook:', submissionData);
 
-      // In a real implementation, you would replace this with your webhook URL
-      // and append all files to the FormData
-      // const formData = new FormData();
-      // formData.append('professionalData', JSON.stringify({
-      //   professionalName: data.professionalName,
-      //   professionalPhone: data.professionalPhone,
-      //   clients: clientEntries.map(entry => ({
-      //     clientName: entry.clientName,
-      //     clientPhone: entry.clientPhone,
-      //   }))
-      // }));
-      // 
-      // clientEntries.forEach((entry, index) => {
-      //   formData.append(`invoice_${index}`, entry.invoice[0]);
-      // });
-      //
-      // const response = await fetch('https://your-webhook-url.com/api/invoices', {
-      //   method: 'POST',
-      //   body: formData,
-      // });
-      // 
-      // if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
+      In a real implementation, you would replace this with your webhook URL
+      and append all files to the FormData
+      const formData = new FormData();
+      formData.append('professionalData', JSON.stringify({
+        professionalName: data.professionalName,
+        professionalPhone: data.professionalPhone,
+        clients: clientEntries.map(entry => ({
+          clientName: entry.clientName,
+          clientPhone: entry.clientPhone,
+        }))
+      }));
+      
+      clientEntries.forEach((entry, index) => {
+        formData.append(`invoice_${index}`, entry.invoice[0]);
+      });
+      
+      const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
       // Success case
       toast({
