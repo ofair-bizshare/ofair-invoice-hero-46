@@ -152,21 +152,14 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // For demonstration, we're just logging the data
-      console.log('Preparing to submit:', {
-        professionalName: data.professionalName,
-        professionalPhone: data.professionalPhone,
-        clients: clientEntries
-      });
-
-      // Create FormData with separate professional fields for easier access
+      // Create FormData with professional details and clients data
       const formData = new FormData();
       
       // Add professional data as separate fields
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      // Add JSON representation of clients for structured data
+      // Add JSON representation of clients data
       formData.append('clientsData', JSON.stringify(
         clientEntries.map(entry => ({
           clientName: entry.clientName || "",
@@ -174,9 +167,11 @@ const InvoiceForm: React.FC = () => {
         }))
       ));
       
-      // Add each invoice file separately
+      // Add invoice files with consistent naming pattern
+      // First invoice will be 'invoice', rest will be 'invoice1', 'invoice2', etc.
       clientEntries.forEach((entry, index) => {
-        formData.append(`invoice_${index}`, entry.invoice[0]);
+        const invoiceKey = index === 0 ? 'invoice' : `invoice${index}`;
+        formData.append(invoiceKey, entry.invoice[0]);
       });
       
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
