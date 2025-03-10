@@ -12,10 +12,10 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 const clientEntrySchema = z.object({
-  clientName: z.string().min(2, { message: "שם הלקוח חייב להכיל לפח��ת 2 תווים" }),
+  clientName: z.string().optional(),
   clientPhone: z.string().regex(/^0[2-9]\d{7,8}$/, { 
     message: "מספר טלפון לא תקין, יש להזין מספר טלפון ישראלי תקין" 
-  }),
+  }).optional(),
   invoice: z
     .instanceof(FileList)
     .refine((files) => files.length > 0, { message: "נדרש להעלות חשבונית" })
@@ -95,7 +95,6 @@ const InvoiceForm: React.FC = () => {
         invoice: currentEntry.invoice
       }]);
       
-      // Reset current entry
       setCurrentEntry({
         clientName: "",
         clientPhone: "",
@@ -153,34 +152,29 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Prepare the data for submission
-      const submissionData = {
-        professionalName: data.professionalName,
-        professionalPhone: data.professionalPhone,
-        clients: clientEntries.map(entry => ({
-          clientName: entry.clientName,
-          clientPhone: entry.clientPhone,
-          fileName: entry.invoice[0].name,
-          fileSize: entry.invoice[0].size,
-          fileType: entry.invoice[0].type
-        }))
-      };
-
       // For demonstration, we're just logging the data
-      console.log('Submitting to webhook:', submissionData);
-
-      // In a real implementation, you would replace this with your webhook URL
-      // and append all files to the FormData
-      const formData = new FormData();
-      formData.append('professionalData', JSON.stringify({
+      console.log('Preparing to submit:', {
         professionalName: data.professionalName,
         professionalPhone: data.professionalPhone,
-        clients: clientEntries.map(entry => ({
-          clientName: entry.clientName,
-          clientPhone: entry.clientPhone,
-        }))
-      }));
+        clients: clientEntries
+      });
+
+      // Create FormData with separate professional fields for easier access
+      const formData = new FormData();
       
+      // Add professional data as separate fields
+      formData.append('professionalName', data.professionalName);
+      formData.append('professionalPhone', data.professionalPhone);
+      
+      // Add JSON representation of clients for structured data
+      formData.append('clientsData', JSON.stringify(
+        clientEntries.map(entry => ({
+          clientName: entry.clientName || "",
+          clientPhone: entry.clientPhone || "",
+        }))
+      ));
+      
+      // Add each invoice file separately
       clientEntries.forEach((entry, index) => {
         formData.append(`invoice_${index}`, entry.invoice[0]);
       });
