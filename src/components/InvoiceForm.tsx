@@ -12,7 +12,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
 const clientEntrySchema = z.object({
-  clientName: z.string().min(2, { message: "שם הלקוח חייב להכיל לפחות 2 תווים" }),
+  clientName: z.string().min(2, { message: "שם הלקוח חייב להכיל לפח��ת 2 תווים" }),
   clientPhone: z.string().regex(/^0[2-9]\d{7,8}$/, { 
     message: "מספר טלפון לא תקין, יש להזין מספר טלפון ישראלי תקין" 
   }),
@@ -154,21 +154,36 @@ const InvoiceForm: React.FC = () => {
 
     try {
       // Prepare the data for submission
+      const submissionData = {
+        professionalName: data.professionalName,
+        professionalPhone: data.professionalPhone,
+        clients: clientEntries.map(entry => ({
+          clientName: entry.clientName,
+          clientPhone: entry.clientPhone,
+          fileName: entry.invoice[0].name,
+          fileSize: entry.invoice[0].size,
+          fileType: entry.invoice[0].type
+        }))
+      };
+
+      // For demonstration, we're just logging the data
+      console.log('Submitting to webhook:', submissionData);
+
+      // In a real implementation, you would replace this with your webhook URL
+      // and append all files to the FormData
       const formData = new FormData();
+      formData.append('professionalData', JSON.stringify({
+        professionalName: data.professionalName,
+        professionalPhone: data.professionalPhone,
+        clients: clientEntries.map(entry => ({
+          clientName: entry.clientName,
+          clientPhone: entry.clientPhone,
+        }))
+      }));
       
-      // Add professional data
-      formData.append('professionalName', data.professionalName);
-      formData.append('professionalPhone', data.professionalPhone);
-      
-      // Add client data in a way that preserves the connection to invoices
       clientEntries.forEach((entry, index) => {
-        formData.append(`client_${index}_name`, entry.clientName);
-        formData.append(`client_${index}_phone`, entry.clientPhone);
-        formData.append(`client_${index}_invoice`, entry.invoice[0]);
+        formData.append(`invoice_${index}`, entry.invoice[0]);
       });
-      
-      // Add the number of clients for easier processing
-      formData.append('clientCount', clientEntries.length.toString());
       
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
         method: 'POST',
