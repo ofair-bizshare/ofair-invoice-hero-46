@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -152,14 +153,14 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Create FormData with professional details and clients data
+      // Create FormData with the structure requested
       const formData = new FormData();
       
-      // Add professional data as separate fields
+      // Add professional data
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      // Add JSON representation of clients data
+      // Add clientsData as a JSON array
       formData.append('clientsData', JSON.stringify(
         clientEntries.map(entry => ({
           clientName: entry.clientName || "",
@@ -167,11 +168,21 @@ const InvoiceForm: React.FC = () => {
         }))
       ));
       
-      // Add invoice files with consistent naming pattern
-      // First invoice will be 'invoice', rest will be 'invoice1', 'invoice2', etc.
+      // Add invoice files as an array of file objects with name, mime, and data
+      // Note: The webhook service will need to handle the binary data correctly
+      // The actual binary data will be sent as separate parts in the multipart/form-data
+      const invoicesMetadata = clientEntries.map(entry => ({
+        name: entry.invoice[0].name,
+        mime: entry.invoice[0].type,
+        // The actual file data will be handled by the server
+      }));
+      
+      // Add invoices metadata
+      formData.append('invoicesMetadata', JSON.stringify(invoicesMetadata));
+      
+      // Add all invoice files under a single key as an array-like structure
       clientEntries.forEach((entry, index) => {
-        const invoiceKey = index === 0 ? 'invoice' : `invoice${index}`;
-        formData.append(invoiceKey, entry.invoice[0]);
+        formData.append(`invoices`, entry.invoice[0]);
       });
       
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
