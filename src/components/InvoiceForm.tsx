@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -83,17 +84,10 @@ const InvoiceForm: React.FC = () => {
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      const clientsDataArray = clientEntries.map(entry => ({
-        clientName: entry.clientName || "",
-        clientPhone: entry.clientPhone || "",
-      }));
-      
-      for (let i = 0; i < clientsDataArray.length; i++) {
-        formData.append(`clientsData[${i}][clientName]`, clientsDataArray[i].clientName);
-        formData.append(`clientsData[${i}][clientPhone]`, clientsDataArray[i].clientPhone);
-      }
-      
+      // Send clientsData as a nested structure
       clientEntries.forEach((entry, index) => {
+        formData.append(`clientsData[${index}][clientName]`, entry.clientName || "");
+        formData.append(`clientsData[${index}][clientPhone]`, entry.clientPhone || "");
         formData.append(`invoices`, entry.invoice[0]);
       });
       
