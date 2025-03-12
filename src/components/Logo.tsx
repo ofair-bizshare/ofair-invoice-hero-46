@@ -6,12 +6,11 @@ const Logo: React.FC = () => {
     <div className="flex items-center gap-2">
       <div className="flex items-center">
         <img 
-          src="/lovable-uploads/5272fae7-177a-41c5-a37a-9158ee6a9863.png" 
+          src="/lovable-uploads/986d6c1f-6af5-4633-b79e-1972689332e9.png" 
           alt="oFair Logo" 
-          className="h-10"
+          className="h-12"
         />
       </div>
-      <span className="text-gray-600 font-medium">פלטפורמה לבעלי מקצוע</span>
     </div>
   );
 };
