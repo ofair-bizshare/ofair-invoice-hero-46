@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -79,29 +78,21 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Create FormData with the structure requested
       const formData = new FormData();
       
-      // Add professional data
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      // Add clientsData as a JSON array
-      formData.append('clientsData', JSON.stringify(
-        clientEntries.map(entry => ({
-          clientName: entry.clientName || "",
-          clientPhone: entry.clientPhone || "",
-        }))
-      ));
-      
-      // Create invoices array with the format requested
-      const invoicesData = clientEntries.map(entry => ({
-        name: entry.invoice[0].name,
-        mime: entry.invoice[0].type,
-        data: entry.invoice[0]
+      const clientsDataArray = clientEntries.map(entry => ({
+        clientName: entry.clientName || "",
+        clientPhone: entry.clientPhone || "",
       }));
       
-      // Add each invoice file
+      for (let i = 0; i < clientsDataArray.length; i++) {
+        formData.append(`clientsData[${i}][clientName]`, clientsDataArray[i].clientName);
+        formData.append(`clientsData[${i}][clientPhone]`, clientsDataArray[i].clientPhone);
+      }
+      
       clientEntries.forEach((entry, index) => {
         formData.append(`invoices`, entry.invoice[0]);
       });
@@ -113,10 +104,8 @@ const InvoiceForm: React.FC = () => {
       
       if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
-      // Show success modal
       setShowSuccessModal(true);
       
-      // Reset form and entries
       form.reset();
       setClientEntries([]);
       
@@ -147,7 +136,6 @@ const InvoiceForm: React.FC = () => {
             <div className="border-t border-gray-200 pt-8">
               <h2 className="text-xl font-bold mb-6">רשומות לקוחות וחשבוניות</h2>
               
-              {/* List of added client entries */}
               {clientEntries.length > 0 && (
                 <div className="space-y-4 mb-8">
                   <h3 className="text-lg font-medium">רשומות שהתווספו ({clientEntries.length})</h3>
@@ -164,7 +152,6 @@ const InvoiceForm: React.FC = () => {
                 </div>
               )}
               
-              {/* Add new client entry form */}
               <ClientEntryForm onAddEntry={handleAddEntry} />
             </div>
             
@@ -179,7 +166,6 @@ const InvoiceForm: React.FC = () => {
         </Form>
       </div>
 
-      {/* Success Modal */}
       <SuccessModal 
         isOpen={showSuccessModal} 
         onClose={() => setShowSuccessModal(false)} 
