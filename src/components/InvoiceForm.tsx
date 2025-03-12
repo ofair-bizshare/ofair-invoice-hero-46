@@ -12,7 +12,7 @@ import ClientEntryForm from './invoiceForm/ClientEntryForm';
 import ClientEntry from './invoiceForm/ClientEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
 
-// Schema definitions
+// Schema definitions - ensure these match our component interfaces
 const clientEntrySchema = z.object({
   clientName: z.string().optional(),
   clientPhone: z.string().regex(/^0[2-9]\d{7,8}$/, { 
@@ -88,16 +88,14 @@ const InvoiceForm: React.FC = () => {
         }))
       ));
       
-      // Add invoice files as an array of file objects with name, mime, and data
-      const invoicesMetadata = clientEntries.map(entry => ({
+      // Create invoices array with the format requested
+      const invoicesData = clientEntries.map(entry => ({
         name: entry.invoice[0].name,
         mime: entry.invoice[0].type,
+        data: entry.invoice[0]
       }));
       
-      // Add invoices metadata
-      formData.append('invoicesMetadata', JSON.stringify(invoicesMetadata));
-      
-      // Add all invoice files under a single key as an array-like structure
+      // Add each invoice file
       clientEntries.forEach((entry, index) => {
         formData.append(`invoices`, entry.invoice[0]);
       });
@@ -109,7 +107,7 @@ const InvoiceForm: React.FC = () => {
       
       if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
-      // Show success modal instead of just a toast
+      // Show success modal
       setShowSuccessModal(true);
       
       // Reset form and entries

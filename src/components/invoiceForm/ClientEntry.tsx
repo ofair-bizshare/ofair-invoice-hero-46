@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 
 interface ClientEntryProps {
   entry: {
-    clientName: string;
-    clientPhone: string;
+    clientName?: string;
+    clientPhone?: string;
     invoice: FileList;
   };
   index: number;
@@ -14,6 +14,9 @@ interface ClientEntryProps {
 }
 
 const ClientEntry: React.FC<ClientEntryProps> = ({ entry, index, onRemove }) => {
+  // Get the file name to display with truncation
+  const fileName = entry.invoice[0]?.name || "";
+  
   return (
     <div className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
       <div className="flex-1 overflow-hidden">
@@ -21,8 +24,8 @@ const ClientEntry: React.FC<ClientEntryProps> = ({ entry, index, onRemove }) => 
         <p className="text-sm text-gray-600">{entry.clientPhone || "ללא מספר טלפון"}</p>
         <div className="flex items-center gap-1.5 text-xs text-ofair mt-1 w-full">
           <FileText className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate max-w-[200px] md:max-w-[300px] block" title={entry.invoice[0].name}>
-            {entry.invoice[0].name}
+          <span className="truncate max-w-[200px] md:max-w-[300px] block" title={fileName}>
+            {fileName}
           </span>
         </div>
       </div>
