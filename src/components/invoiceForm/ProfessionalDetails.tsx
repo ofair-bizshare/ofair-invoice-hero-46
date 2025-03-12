@@ -3,12 +3,7 @@ import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UseFormReturn } from 'react-hook-form';
-
-// Updated interface to match the form schema in InvoiceForm.tsx
-interface FormValues {
-  professionalName: string;
-  professionalPhone: string;
-}
+import { FormValues } from '../InvoiceForm';
 
 interface ProfessionalDetailsProps {
   form: UseFormReturn<FormValues>;

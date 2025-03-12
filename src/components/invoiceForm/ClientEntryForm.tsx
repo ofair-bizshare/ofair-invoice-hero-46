@@ -5,6 +5,7 @@ import { FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, FileText, Plus } from 'lucide-react';
+import { ClientEntryType } from '../InvoiceForm';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
@@ -25,7 +26,7 @@ const clientEntrySchema = z.object({
 });
 
 interface ClientEntryFormProps {
-  onAddEntry: (entry: z.infer<typeof clientEntrySchema>) => void;
+  onAddEntry: (entry: ClientEntryType) => void;
 }
 
 const ClientEntryForm: React.FC<ClientEntryFormProps> = ({ onAddEntry }) => {

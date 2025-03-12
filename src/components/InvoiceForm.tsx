@@ -28,13 +28,19 @@ const formSchema = z.object({
   }),
 });
 
-type ClientEntry = z.infer<typeof clientEntrySchema>;
-type FormValues = z.infer<typeof formSchema>;
+// Define consistent types that match the schema definitions
+export type ClientEntryType = {
+  clientName?: string;
+  clientPhone?: string;
+  invoice: FileList;
+};
+
+export type FormValues = z.infer<typeof formSchema>;
 
 const InvoiceForm: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clientEntries, setClientEntries] = useState<ClientEntry[]>([]);
+  const [clientEntries, setClientEntries] = useState<ClientEntryType[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const form = useForm<FormValues>({
@@ -45,7 +51,7 @@ const InvoiceForm: React.FC = () => {
     },
   });
 
-  const handleAddEntry = (entry: ClientEntry) => {
+  const handleAddEntry = (entry: ClientEntryType) => {
     setClientEntries([...clientEntries, entry]);
   };
 

@@ -2,13 +2,10 @@
 import React from 'react';
 import { FileText, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { ClientEntryType } from '../InvoiceForm';
 
 interface ClientEntryProps {
-  entry: {
-    clientName?: string;
-    clientPhone?: string;
-    invoice: FileList;
-  };
+  entry: ClientEntryType;
   index: number;
   onRemove: (index: number) => void;
 }
