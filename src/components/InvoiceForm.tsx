@@ -197,17 +197,18 @@ const InvoiceForm: React.FC = () => {
               onValueChange={(value) => setActiveTab(value as DocumentType)}
             >
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="invoices">העלאת חשבוניות</TabsTrigger>
-                <TabsTrigger value="certificates">העלאת תעודות מקצועיות</TabsTrigger>
+                <TabsTrigger value="invoices" className="text-base py-3">העלאת חשבוניות</TabsTrigger>
+                <TabsTrigger value="certificates" className="text-base py-3">העלאת תעודות מקצועיות</TabsTrigger>
               </TabsList>
               
               <TabsContent value="invoices" className="space-y-8">
                 <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-xl font-bold mb-6">רשומות לקוחות וחשבוניות</h2>
+                  <h2 className="text-xl font-bold mb-6">העלאת חשבוניות</h2>
+                  <p className="text-gray-600 mb-6">באזור זה ניתן להעלות חשבוניות שביצעתם עבור לקוחות. ניתן להוסיף מספר חשבוניות בו-זמנית.</p>
                   
                   {clientEntries.length > 0 && (
                     <div className="space-y-4 mb-8">
-                      <h3 className="text-lg font-medium">רשומות שהתווספו ({clientEntries.length})</h3>
+                      <h3 className="text-lg font-medium">חשבוניות שהתווספו ({clientEntries.length})</h3>
                       <div className="space-y-3">
                         {clientEntries.map((entry, index) => (
                           <ClientEntry 
@@ -227,7 +228,8 @@ const InvoiceForm: React.FC = () => {
               
               <TabsContent value="certificates" className="space-y-8">
                 <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-xl font-bold mb-6">תעודות מקצועיות</h2>
+                  <h2 className="text-xl font-bold mb-6">העלאת תעודות מקצועיות</h2>
+                  <p className="text-gray-600 mb-6">באזור זה ניתן להעלות תעודות הסמכה מקצועיות ורישיונות. העלאת התעודות תסייע בתהליך האימות והרישום במערכת.</p>
                   
                   {certificateEntries.length > 0 && (
                     <div className="space-y-4 mb-8">
@@ -252,7 +254,7 @@ const InvoiceForm: React.FC = () => {
             
             <Button 
               type="submit" 
-              className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base" 
+              className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base py-6" 
               disabled={isSubmitting || (activeTab === 'invoices' ? clientEntries.length === 0 : certificateEntries.length === 0)}
             >
               {isSubmitting ? "שולח..." : activeTab === 'invoices' 

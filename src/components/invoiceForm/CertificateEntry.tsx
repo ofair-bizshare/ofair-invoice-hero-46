@@ -12,13 +12,13 @@ interface CertificateEntryProps {
 
 const CertificateEntry: React.FC<CertificateEntryProps> = ({ entry, index, onRemove }) => {
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex justify-between items-center">
+    <div className="bg-white border border-gray-200 rounded-lg p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start gap-3">
         <div className="bg-ofair/10 p-2 rounded-full">
           <FileText className="h-5 w-5 text-ofair" />
         </div>
         <div>
-          <h4 className="font-medium">{entry.certificateName}</h4>
+          <h4 className="font-medium text-gray-800">{entry.certificateName}</h4>
           {entry.issueDate && (
             <p className="text-xs text-gray-500">תאריך הנפקה: {entry.issueDate}</p>
           )}
@@ -31,7 +31,7 @@ const CertificateEntry: React.FC<CertificateEntryProps> = ({ entry, index, onRem
         variant="ghost"
         size="sm"
         onClick={() => onRemove(index)}
-        className="text-gray-500 hover:text-destructive"
+        className="text-gray-500 hover:text-destructive transition-colors"
       >
         <X className="h-4 w-4" />
       </Button>

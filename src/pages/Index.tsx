@@ -14,10 +14,10 @@ const Index = () => {
         <main className="w-full max-w-4xl mx-auto flex flex-col items-center">
           <div className="text-center mb-10">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-              העלאת חשבוניות ל-oFair
+              העלאת מסמכים ל-oFair
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              ברוכים הבאים ל-oFair! כאן תוכלו להעלות חשבוניות על עבודות שביצעתם. אנא מלאו את הפרטים ושלחו את החשבונית בקלות.
+              ברוכים הבאים למערכת המסמכים של oFair! כאן תוכלו להעלות חשבוניות ותעודות מקצועיות בקלות ובמהירות. המערכת מאפשרת ניהול יעיל של המסמכים שלכם לצורך שיפור תהליכי העבודה.
             </p>
           </div>
           
