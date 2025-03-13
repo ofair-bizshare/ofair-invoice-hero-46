@@ -10,7 +10,10 @@ import { AlertCircle } from 'lucide-react';
 import ProfessionalDetails from './invoiceForm/ProfessionalDetails';
 import ClientEntryForm from './invoiceForm/ClientEntryForm';
 import ClientEntry from './invoiceForm/ClientEntry';
+import CertificateEntryForm from './invoiceForm/CertificateEntryForm';
+import CertificateEntry from './invoiceForm/CertificateEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Schema definitions - ensure these match our component interfaces
 const clientEntrySchema = z.object({
@@ -19,6 +22,12 @@ const clientEntrySchema = z.object({
     message: "מספר טלפון לא תקין, יש להזין מספר טלפון ישראלי תקין" 
   }).optional(),
   invoice: z.instanceof(FileList)
+});
+
+const certificateEntrySchema = z.object({
+  certificateName: z.string().min(2, { message: "יש להזין שם תעודה" }),
+  issueDate: z.string().optional(),
+  certificate: z.instanceof(FileList)
 });
 
 const formSchema = z.object({
@@ -35,13 +44,23 @@ export type ClientEntryType = {
   invoice: FileList;
 };
 
+export type CertificateEntryType = {
+  certificateName: string;
+  issueDate?: string;
+  certificate: FileList;
+};
+
 export type FormValues = z.infer<typeof formSchema>;
+
+type DocumentType = 'invoices' | 'certificates';
 
 const InvoiceForm: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientEntries, setClientEntries] = useState<ClientEntryType[]>([]);
+  const [certificateEntries, setCertificateEntries] = useState<CertificateEntryType[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<DocumentType>('invoices');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -51,18 +70,28 @@ const InvoiceForm: React.FC = () => {
     },
   });
 
-  const handleAddEntry = (entry: ClientEntryType) => {
+  const handleAddClientEntry = (entry: ClientEntryType) => {
     setClientEntries([...clientEntries, entry]);
   };
 
-  const handleRemoveEntry = (index: number) => {
+  const handleRemoveClientEntry = (index: number) => {
     const updatedEntries = [...clientEntries];
     updatedEntries.splice(index, 1);
     setClientEntries(updatedEntries);
   };
 
-  const onSubmit = async (data: FormValues) => {
-    if (clientEntries.length === 0) {
+  const handleAddCertificateEntry = (entry: CertificateEntryType) => {
+    setCertificateEntries([...certificateEntries, entry]);
+  };
+
+  const handleRemoveCertificateEntry = (index: number) => {
+    const updatedEntries = [...certificateEntries];
+    updatedEntries.splice(index, 1);
+    setCertificateEntries(updatedEntries);
+  };
+
+  const validateSubmission = (): boolean => {
+    if (activeTab === 'invoices' && clientEntries.length === 0) {
       toast({
         title: "אין רשומות לשליחה",
         description: (
@@ -73,8 +102,28 @@ const InvoiceForm: React.FC = () => {
         ),
         variant: "destructive",
       });
-      return;
+      return false;
     }
+    
+    if (activeTab === 'certificates' && certificateEntries.length === 0) {
+      toast({
+        title: "אין תעודות לשליחה",
+        description: (
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>יש להוסיף לפחות תעודה מקצועית אחת</span>
+          </div>
+        ),
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    return true;
+  };
+
+  const onSubmit = async (data: FormValues) => {
+    if (!validateSubmission()) return;
 
     setIsSubmitting(true);
 
@@ -83,13 +132,23 @@ const InvoiceForm: React.FC = () => {
       
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
+      formData.append('documentType', activeTab); // Add the document type parameter
       
-      // Send clientsData as a nested structure
-      clientEntries.forEach((entry, index) => {
-        formData.append(`clientsData[${index}][clientName]`, entry.clientName || "");
-        formData.append(`clientsData[${index}][clientPhone]`, entry.clientPhone || "");
-        formData.append(`invoices`, entry.invoice[0]);
-      });
+      if (activeTab === 'invoices') {
+        // Send clientsData as a nested structure
+        clientEntries.forEach((entry, index) => {
+          formData.append(`clientsData[${index}][clientName]`, entry.clientName || "");
+          formData.append(`clientsData[${index}][clientPhone]`, entry.clientPhone || "");
+          formData.append(`invoices`, entry.invoice[0]);
+        });
+      } else {
+        // Send certificatesData with a similar structure to clientsData
+        certificateEntries.forEach((entry, index) => {
+          formData.append(`certificatesData[${index}][certificateName]`, entry.certificateName);
+          formData.append(`certificatesData[${index}][issueDate]`, entry.issueDate || "");
+          formData.append(`certificates`, entry.certificate[0]);
+        });
+      }
       
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
         method: 'POST',
@@ -100,8 +159,12 @@ const InvoiceForm: React.FC = () => {
 
       setShowSuccessModal(true);
       
-      form.reset();
-      setClientEntries([]);
+      // Reset the form and entries
+      if (activeTab === 'invoices') {
+        setClientEntries([]);
+      } else {
+        setCertificateEntries([]);
+      }
       
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -127,34 +190,75 @@ const InvoiceForm: React.FC = () => {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <ProfessionalDetails form={form} />
 
-            <div className="border-t border-gray-200 pt-8">
-              <h2 className="text-xl font-bold mb-6">רשומות לקוחות וחשבוניות</h2>
+            <Tabs 
+              defaultValue="invoices" 
+              className="w-full"
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as DocumentType)}
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="invoices">העלאת חשבוניות</TabsTrigger>
+                <TabsTrigger value="certificates">העלאת תעודות מקצועיות</TabsTrigger>
+              </TabsList>
               
-              {clientEntries.length > 0 && (
-                <div className="space-y-4 mb-8">
-                  <h3 className="text-lg font-medium">רשומות שהתווספו ({clientEntries.length})</h3>
-                  <div className="space-y-3">
-                    {clientEntries.map((entry, index) => (
-                      <ClientEntry 
-                        key={index} 
-                        entry={entry} 
-                        index={index} 
-                        onRemove={handleRemoveEntry} 
-                      />
-                    ))}
-                  </div>
+              <TabsContent value="invoices" className="space-y-8">
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-xl font-bold mb-6">רשומות לקוחות וחשבוניות</h2>
+                  
+                  {clientEntries.length > 0 && (
+                    <div className="space-y-4 mb-8">
+                      <h3 className="text-lg font-medium">רשומות שהתווספו ({clientEntries.length})</h3>
+                      <div className="space-y-3">
+                        {clientEntries.map((entry, index) => (
+                          <ClientEntry 
+                            key={index} 
+                            entry={entry} 
+                            index={index} 
+                            onRemove={handleRemoveClientEntry} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <ClientEntryForm onAddEntry={handleAddClientEntry} />
                 </div>
-              )}
+              </TabsContent>
               
-              <ClientEntryForm onAddEntry={handleAddEntry} />
-            </div>
+              <TabsContent value="certificates" className="space-y-8">
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-xl font-bold mb-6">תעודות מקצועיות</h2>
+                  
+                  {certificateEntries.length > 0 && (
+                    <div className="space-y-4 mb-8">
+                      <h3 className="text-lg font-medium">תעודות שהתווספו ({certificateEntries.length})</h3>
+                      <div className="space-y-3">
+                        {certificateEntries.map((entry, index) => (
+                          <CertificateEntry 
+                            key={index} 
+                            entry={entry} 
+                            index={index} 
+                            onRemove={handleRemoveCertificateEntry} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
+                </div>
+              </TabsContent>
+            </Tabs>
             
             <Button 
               type="submit" 
               className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base" 
-              disabled={isSubmitting || clientEntries.length === 0}
+              disabled={isSubmitting || (activeTab === 'invoices' ? clientEntries.length === 0 : certificateEntries.length === 0)}
             >
-              {isSubmitting ? "שולח..." : `שלח ${clientEntries.length} חשבוניות`}
+              {isSubmitting ? "שולח..." : activeTab === 'invoices' 
+                ? `שלח ${clientEntries.length} חשבוניות`
+                : `שלח ${certificateEntries.length} תעודות מקצועיות`
+              }
             </Button>
           </form>
         </Form>
