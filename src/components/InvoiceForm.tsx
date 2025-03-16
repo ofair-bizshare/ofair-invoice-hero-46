@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { AlertCircle, FileText } from 'lucide-react';
+import { AlertCircle, FileText, Send, Check } from 'lucide-react';
 import ProfessionalDetails from './invoiceForm/ProfessionalDetails';
 import ClientEntryForm from './invoiceForm/ClientEntryForm';
 import ClientEntry from './invoiceForm/ClientEntry';
@@ -59,6 +60,17 @@ const InvoiceForm: React.FC = () => {
   const [certificateEntries, setCertificateEntries] = useState<CertificateEntryType[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [activeTab, setActiveTab] = useState<DocumentType>('invoices');
+  
+  // Boolean flags to track what's being sent
+  const [hasInvoices, setHasInvoices] = useState(false);
+  const [hasCertificates, setHasCertificates] = useState(false);
+  const [successDocumentType, setSuccessDocumentType] = useState<DocumentType>('invoices');
+
+  // Update the flags when entries change
+  useEffect(() => {
+    setHasInvoices(clientEntries.length > 0);
+    setHasCertificates(certificateEntries.length > 0);
+  }, [clientEntries, certificateEntries]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -89,27 +101,14 @@ const InvoiceForm: React.FC = () => {
   };
 
   const validateSubmission = (): boolean => {
-    if (activeTab === 'invoices' && clientEntries.length === 0) {
+    // Check if either type of document is present
+    if (!hasInvoices && !hasCertificates) {
       toast({
-        title: "אין רשומות לשליחה",
+        title: "אין מסמכים לשליחה",
         description: (
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            <span>יש להוסיף לפחות רשומת לקוח אחת</span>
-          </div>
-        ),
-        variant: "destructive",
-      });
-      return false;
-    }
-    
-    if (activeTab === 'certificates' && certificateEntries.length === 0) {
-      toast({
-        title: "אין תעודות לשליחה",
-        description: (
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive" />
-            <span>יש להוסיף לפחות תעודה מקצועית אחת</span>
+            <span>יש להוסיף לפחות מסמך אחד לשליחה (חשבונית או תעודה מקצועית)</span>
           </div>
         ),
         variant: "destructive",
@@ -126,72 +125,72 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      if (activeTab === 'invoices') {
+      // Set the success document type based on what's being sent
+      if (hasInvoices && hasCertificates) {
+        setSuccessDocumentType('both');
+      } else if (hasInvoices) {
+        setSuccessDocumentType('invoices');
+      } else {
+        setSuccessDocumentType('certificates');
+      }
+
+      // Create the FormData object
+      const formData = new FormData();
+      
+      // Add professional details as separate fields
+      formData.append('professionalName', data.professionalName);
+      formData.append('professionalPhone', data.professionalPhone);
+      
+      // Add data for invoices if present
+      if (hasInvoices) {
         // Create a JSON array of clients
         const clientsData = clientEntries.map(entry => ({
           clientName: entry.clientName || "",
           clientPhone: entry.clientPhone || ""
         }));
         
-        // Prepare the FormData
-        const formData = new FormData();
-        
-        // Add professional details as separate fields
-        formData.append('professionalName', data.professionalName);
-        formData.append('professionalPhone', data.professionalPhone);
-        formData.append('documentType', activeTab);
-        
-        // Add client data as a JSON string
+        formData.append('documentType', 'invoices');
         formData.append('clientsData', JSON.stringify(clientsData));
         
         // Add all invoice files
-        clientEntries.forEach((entry, index) => {
+        clientEntries.forEach((entry) => {
           formData.append(`invoices`, entry.invoice[0]);
         });
-        
-        const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
-      } else {
+      }
+      
+      // Add data for certificates if present
+      if (hasCertificates) {
         // Create a JSON array of certificates
         const certificatesData = certificateEntries.map(entry => ({
           certificateName: entry.certificateName,
           issueDate: entry.issueDate || ""
         }));
         
-        const formData = new FormData();
+        // If both are present, we're already adding invoices document type
+        if (!hasInvoices) {
+          formData.append('documentType', 'certificates');
+        }
         
-        // Add professional details as separate fields
-        formData.append('professionalName', data.professionalName);
-        formData.append('professionalPhone', data.professionalPhone);
-        formData.append('documentType', activeTab);
-        
-        // Add certificate data as a JSON string
         formData.append('certificatesData', JSON.stringify(certificatesData));
         
         // Add all certificate files
-        certificateEntries.forEach((entry, index) => {
+        certificateEntries.forEach((entry) => {
           formData.append(`certificates`, entry.certificate[0]);
         });
-        
-        const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       }
+        
+      const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
       setShowSuccessModal(true);
       
-      if (activeTab === 'invoices') {
-        setClientEntries([]);
-      } else {
-        setCertificateEntries([]);
-      }
+      // Reset the relevant form entries based on what was sent
+      if (hasInvoices) setClientEntries([]);
+      if (hasCertificates) setCertificateEntries([]);
       
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -208,6 +207,21 @@ const InvoiceForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Dynamically determine button text based on available documents
+  const getSubmitButtonText = () => {
+    if (isSubmitting) return "שולח...";
+    
+    if (hasInvoices && hasCertificates) {
+      return `שלח ${clientEntries.length} חשבוניות ו-${certificateEntries.length} תעודות מקצועיות`;
+    } else if (hasInvoices) {
+      return `שלח ${clientEntries.length} חשבוניות`;
+    } else if (hasCertificates) {
+      return `שלח ${certificateEntries.length} תעודות מקצועיות`;
+    }
+    
+    return "שלח מסמכים";
   };
 
   return (
@@ -308,13 +322,29 @@ const InvoiceForm: React.FC = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base py-6" 
-                disabled={isSubmitting || (activeTab === 'invoices' ? clientEntries.length === 0 : certificateEntries.length === 0)}
+                disabled={isSubmitting || (!hasInvoices && !hasCertificates)}
               >
-                {isSubmitting ? "שולח..." : activeTab === 'invoices' 
-                  ? `שלח ${clientEntries.length} חשבוניות`
-                  : `שלח ${certificateEntries.length} תעודות מקצועיות`
-                }
+                <Send className="h-5 w-5 ml-2" />
+                {getSubmitButtonText()}
               </Button>
+              
+              {/* Show summary of documents ready to be sent */}
+              {(hasInvoices || hasCertificates) && (
+                <div className="mt-4 flex flex-col gap-2">
+                  {hasInvoices && (
+                    <div className="flex items-center text-sm text-green-600">
+                      <Check className="h-4 w-4 mr-1" />
+                      <span>{clientEntries.length} חשבוניות מוכנות לשליחה</span>
+                    </div>
+                  )}
+                  {hasCertificates && (
+                    <div className="flex items-center text-sm text-green-600">
+                      <Check className="h-4 w-4 mr-1" />
+                      <span>{certificateEntries.length} תעודות מקצועיות מוכנות לשליחה</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </form>
         </Form>
@@ -323,7 +353,7 @@ const InvoiceForm: React.FC = () => {
       <SuccessModal 
         isOpen={showSuccessModal} 
         onClose={() => setShowSuccessModal(false)} 
-        documentType={activeTab}
+        documentType={successDocumentType}
       />
     </>
   );
