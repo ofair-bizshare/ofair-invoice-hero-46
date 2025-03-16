@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -125,42 +126,60 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
+      // Create the main payload object to match the exact structure required
+      const payload: any = {
+        professionalName: data.professionalName,
+        professionalPhone: data.professionalPhone,
+        documentType: activeTab,
+      };
       
-      formData.append('professionalName', data.professionalName);
-      formData.append('professionalPhone', data.professionalPhone);
-      formData.append('documentType', activeTab);
-      
+      // Add the appropriate data structure based on the active tab
       if (activeTab === 'invoices') {
-        const clientsData = clientEntries.map(entry => ({
+        // Add the clientsData array directly to the payload
+        payload.clientsData = clientEntries.map(entry => ({
           clientName: entry.clientName || "",
           clientPhone: entry.clientPhone || ""
         }));
         
-        formData.append('clientsData', JSON.stringify(clientsData));
+        // Prepare the FormData to send both the JSON payload and files
+        const formData = new FormData();
         
+        // Add the main payload as a JSON string
+        formData.append('payload', JSON.stringify(payload));
+        
+        // Add all the invoice files
         clientEntries.forEach((entry, index) => {
-          formData.append(`invoices`, entry.invoice[0], entry.invoice[0].name);
+          formData.append('invoices', entry.invoice[0], entry.invoice[0].name);
         });
+        
+        // Send the data to the server
+        const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       } else {
-        const certificatesData = certificateEntries.map(entry => ({
+        // For certificates, follow the same structure
+        payload.certificatesData = certificateEntries.map(entry => ({
           certificateName: entry.certificateName,
           issueDate: entry.issueDate || ""
         }));
         
-        formData.append('certificatesData', JSON.stringify(certificatesData));
+        const formData = new FormData();
+        formData.append('payload', JSON.stringify(payload));
         
-        certificateEntries.forEach((entry, index) => {
-          formData.append(`certificates`, entry.certificate[0], entry.certificate[0].name);
+        certificateEntries.forEach((entry) => {
+          formData.append('certificates', entry.certificate[0], entry.certificate[0].name);
         });
+        
+        const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       }
-      
-      const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
       setShowSuccessModal(true);
       
