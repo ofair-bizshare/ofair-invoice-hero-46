@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -127,28 +126,31 @@ const InvoiceForm: React.FC = () => {
 
     try {
       if (activeTab === 'invoices') {
-        // Create a payload for just the client data
-        const clientsDataPayload = {
-          clientsData: clientEntries.map(entry => ({
+        // Create an array of client-invoice pairs for easier iteration
+        const clientInvoicePairs = clientEntries.map((entry, index) => ({
+          client: {
             clientName: entry.clientName || "",
             clientPhone: entry.clientPhone || ""
-          }))
-        };
+          },
+          invoice: entry.invoice[0]
+        }));
         
         // Prepare the FormData to send both the JSON payload and files
         const formData = new FormData();
         
-        // Add professional details as separate fields
+        // Add professional details
         formData.append('professionalName', data.professionalName);
         formData.append('professionalPhone', data.professionalPhone);
         formData.append('documentType', activeTab);
         
-        // Add client data as JSON
-        formData.append('clientsData', JSON.stringify(clientsDataPayload.clientsData));
+        // Add client-invoice pairs as JSON (directly parseable)
+        formData.append('clientInvoicePairs', JSON.stringify(clientInvoicePairs.map(pair => pair.client)));
         
-        // Add all the invoice files
-        clientEntries.forEach((entry) => {
-          formData.append('invoices', entry.invoice[0], entry.invoice[0].name);
+        // Add all the invoice files with index in filename to maintain relationship
+        clientInvoicePairs.forEach((pair, index) => {
+          // Add index to filename to create relationship with client data
+          const fileName = `${index}_${pair.invoice.name}`;
+          formData.append('invoices', pair.invoice, fileName);
         });
         
         // Send the data to the server
@@ -159,27 +161,30 @@ const InvoiceForm: React.FC = () => {
         
         if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       } else {
-        // For certificates, follow the same structure
-        const certificatesDataPayload = {
-          certificatesData: certificateEntries.map(entry => ({
+        // For certificates, follow the same improved structure with indexing
+        const certificateDataPairs = certificateEntries.map((entry, index) => ({
+          certificate: {
             certificateName: entry.certificateName,
             issueDate: entry.issueDate || ""
-          }))
-        };
+          },
+          file: entry.certificate[0]
+        }));
         
         const formData = new FormData();
         
-        // Add professional details as separate fields
+        // Add professional details
         formData.append('professionalName', data.professionalName);
         formData.append('professionalPhone', data.professionalPhone);
         formData.append('documentType', activeTab);
         
-        // Add certificate data as JSON
-        formData.append('certificatesData', JSON.stringify(certificatesDataPayload.certificatesData));
+        // Add certificate data as directly parseable JSON array
+        formData.append('certificateDataPairs', JSON.stringify(certificateDataPairs.map(pair => pair.certificate)));
         
-        // Add all certificate files
-        certificateEntries.forEach((entry) => {
-          formData.append('certificates', entry.certificate[0], entry.certificate[0].name);
+        // Add all certificate files with index prefixes to maintain relationships
+        certificateDataPairs.forEach((pair, index) => {
+          // Add index to filename to create relationship with certificate data
+          const fileName = `${index}_${pair.file.name}`;
+          formData.append('certificates', pair.file, fileName);
         });
         
         const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
