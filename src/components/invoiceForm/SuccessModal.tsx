@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
+  documentType?: 'invoices' | 'certificates';
 }
 
-const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose }) => {
+const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, documentType = 'invoices' }) => {
   if (!isOpen) return null;
 
   return (
@@ -32,7 +33,9 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose }) => {
           </div>
           
           <h3 className="text-xl font-bold text-gray-900 mb-2">
-            החשבוניות נשלחו בהצלחה!
+            {documentType === 'invoices' 
+              ? 'החשבוניות נשלחו בהצלחה!' 
+              : 'התעודות המקצועיות נשלחו בהצלחה!'}
           </h3>
           
           <p className="text-gray-600">

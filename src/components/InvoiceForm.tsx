@@ -5,7 +5,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileText } from 'lucide-react';
 import ProfessionalDetails from './invoiceForm/ProfessionalDetails';
 import ClientEntryForm from './invoiceForm/ClientEntryForm';
 import ClientEntry from './invoiceForm/ClientEntry';
@@ -13,6 +13,7 @@ import CertificateEntryForm from './invoiceForm/CertificateEntryForm';
 import CertificateEntry from './invoiceForm/CertificateEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from 'react-router-dom';
 
 const clientEntrySchema = z.object({
   clientName: z.string().optional(),
@@ -126,34 +127,28 @@ const InvoiceForm: React.FC = () => {
 
     try {
       if (activeTab === 'invoices') {
-        // Create an array of client-invoice pairs for easier iteration
-        const clientInvoicePairs = clientEntries.map((entry, index) => ({
-          client: {
-            clientName: entry.clientName || "",
-            clientPhone: entry.clientPhone || ""
-          },
-          invoice: entry.invoice[0]
+        // Create a JSON array of clients
+        const clientsData = clientEntries.map(entry => ({
+          clientName: entry.clientName || "",
+          clientPhone: entry.clientPhone || ""
         }));
         
-        // Prepare the FormData to send both the JSON payload and files
+        // Prepare the FormData
         const formData = new FormData();
         
-        // Add professional details
+        // Add professional details as separate fields
         formData.append('professionalName', data.professionalName);
         formData.append('professionalPhone', data.professionalPhone);
         formData.append('documentType', activeTab);
         
-        // Add client-invoice pairs as JSON (directly parseable)
-        formData.append('clientInvoicePairs', JSON.stringify(clientInvoicePairs.map(pair => pair.client)));
+        // Add client data as a JSON string
+        formData.append('clientsData', JSON.stringify(clientsData));
         
-        // Add all the invoice files with index in filename to maintain relationship
-        clientInvoicePairs.forEach((pair, index) => {
-          // Add index to filename to create relationship with client data
-          const fileName = `${index}_${pair.invoice.name}`;
-          formData.append('invoices', pair.invoice, fileName);
+        // Add all invoice files
+        clientEntries.forEach((entry, index) => {
+          formData.append(`invoices`, entry.invoice[0]);
         });
         
-        // Send the data to the server
         const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
           method: 'POST',
           body: formData,
@@ -161,30 +156,25 @@ const InvoiceForm: React.FC = () => {
         
         if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       } else {
-        // For certificates, follow the same improved structure with indexing
-        const certificateDataPairs = certificateEntries.map((entry, index) => ({
-          certificate: {
-            certificateName: entry.certificateName,
-            issueDate: entry.issueDate || ""
-          },
-          file: entry.certificate[0]
+        // Create a JSON array of certificates
+        const certificatesData = certificateEntries.map(entry => ({
+          certificateName: entry.certificateName,
+          issueDate: entry.issueDate || ""
         }));
         
         const formData = new FormData();
         
-        // Add professional details
+        // Add professional details as separate fields
         formData.append('professionalName', data.professionalName);
         formData.append('professionalPhone', data.professionalPhone);
         formData.append('documentType', activeTab);
         
-        // Add certificate data as directly parseable JSON array
-        formData.append('certificateDataPairs', JSON.stringify(certificateDataPairs.map(pair => pair.certificate)));
+        // Add certificate data as a JSON string
+        formData.append('certificatesData', JSON.stringify(certificatesData));
         
-        // Add all certificate files with index prefixes to maintain relationships
-        certificateDataPairs.forEach((pair, index) => {
-          // Add index to filename to create relationship with certificate data
-          const fileName = `${index}_${pair.file.name}`;
-          formData.append('certificates', pair.file, fileName);
+        // Add all certificate files
+        certificateEntries.forEach((entry, index) => {
+          formData.append(`certificates`, entry.certificate[0]);
         });
         
         const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
@@ -225,7 +215,29 @@ const InvoiceForm: React.FC = () => {
       <div className="space-y-8">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <ProfessionalDetails form={form} />
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <ProfessionalDetails form={form} />
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 className="text-lg font-medium mb-3">על השירות</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
+                </p>
+                <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והמומחיות שלך</li>
+                  <li>חשבוניות עבר מעידות על ניסיונך וסוג העבודות שביצעת</li>
+                  <li>כל המידע מאובטח ומשמש רק לצורכי דירוג במערכת</li>
+                </ul>
+                <div className="flex items-center text-sm text-ofair mt-4">
+                  <FileText className="h-4 w-4 mr-1" />
+                  <Link to="/terms" className="underline hover:text-ofair-dark">
+                    תקנון ותנאי שימוש
+                  </Link>
+                </div>
+              </div>
+            </div>
 
             <Tabs 
               defaultValue="invoices" 
@@ -289,16 +301,21 @@ const InvoiceForm: React.FC = () => {
               </TabsContent>
             </Tabs>
             
-            <Button 
-              type="submit" 
-              className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base py-6" 
-              disabled={isSubmitting || (activeTab === 'invoices' ? clientEntries.length === 0 : certificateEntries.length === 0)}
-            >
-              {isSubmitting ? "שולח..." : activeTab === 'invoices' 
-                ? `שלח ${clientEntries.length} חשבוניות`
-                : `שלח ${certificateEntries.length} תעודות מקצועיות`
-              }
-            </Button>
+            <div className="pt-4">
+              <p className="text-sm text-gray-500 mb-4">
+                בלחיצה על כפתור השליחה, הנך מאשר/ת כי קראת והסכמת ל<Link to="/terms" className="underline hover:text-ofair">תקנון ותנאי השימוש</Link> של פלטפורמת oFair.
+              </p>
+              <Button 
+                type="submit" 
+                className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base py-6" 
+                disabled={isSubmitting || (activeTab === 'invoices' ? clientEntries.length === 0 : certificateEntries.length === 0)}
+              >
+                {isSubmitting ? "שולח..." : activeTab === 'invoices' 
+                  ? `שלח ${clientEntries.length} חשבוניות`
+                  : `שלח ${certificateEntries.length} תעודות מקצועיות`
+                }
+              </Button>
+            </div>
           </form>
         </Form>
       </div>
@@ -306,6 +323,7 @@ const InvoiceForm: React.FC = () => {
       <SuccessModal 
         isOpen={showSuccessModal} 
         onClose={() => setShowSuccessModal(false)} 
+        documentType={activeTab}
       />
     </>
   );
