@@ -126,29 +126,28 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Create the main payload object to match the exact structure required
-      const payload: any = {
-        professionalName: data.professionalName,
-        professionalPhone: data.professionalPhone,
-        documentType: activeTab,
-      };
-      
-      // Add the appropriate data structure based on the active tab
       if (activeTab === 'invoices') {
-        // Add the clientsData array directly to the payload
-        payload.clientsData = clientEntries.map(entry => ({
-          clientName: entry.clientName || "",
-          clientPhone: entry.clientPhone || ""
-        }));
+        // Create a payload for just the client data
+        const clientsDataPayload = {
+          clientsData: clientEntries.map(entry => ({
+            clientName: entry.clientName || "",
+            clientPhone: entry.clientPhone || ""
+          }))
+        };
         
         // Prepare the FormData to send both the JSON payload and files
         const formData = new FormData();
         
-        // Add the main payload as a JSON string
-        formData.append('payload', JSON.stringify(payload));
+        // Add professional details as separate fields
+        formData.append('professionalName', data.professionalName);
+        formData.append('professionalPhone', data.professionalPhone);
+        formData.append('documentType', activeTab);
+        
+        // Add client data as JSON
+        formData.append('clientsData', JSON.stringify(clientsDataPayload.clientsData));
         
         // Add all the invoice files
-        clientEntries.forEach((entry, index) => {
+        clientEntries.forEach((entry) => {
           formData.append('invoices', entry.invoice[0], entry.invoice[0].name);
         });
         
@@ -161,14 +160,24 @@ const InvoiceForm: React.FC = () => {
         if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
       } else {
         // For certificates, follow the same structure
-        payload.certificatesData = certificateEntries.map(entry => ({
-          certificateName: entry.certificateName,
-          issueDate: entry.issueDate || ""
-        }));
+        const certificatesDataPayload = {
+          certificatesData: certificateEntries.map(entry => ({
+            certificateName: entry.certificateName,
+            issueDate: entry.issueDate || ""
+          }))
+        };
         
         const formData = new FormData();
-        formData.append('payload', JSON.stringify(payload));
         
+        // Add professional details as separate fields
+        formData.append('professionalName', data.professionalName);
+        formData.append('professionalPhone', data.professionalPhone);
+        formData.append('documentType', activeTab);
+        
+        // Add certificate data as JSON
+        formData.append('certificatesData', JSON.stringify(certificatesDataPayload.certificatesData));
+        
+        // Add all certificate files
         certificateEntries.forEach((entry) => {
           formData.append('certificates', entry.certificate[0], entry.certificate[0].name);
         });
