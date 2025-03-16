@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -15,7 +14,6 @@ import CertificateEntry from './invoiceForm/CertificateEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Schema definitions - ensure these match our component interfaces
 const clientEntrySchema = z.object({
   clientName: z.string().optional(),
   clientPhone: z.string().regex(/^0[2-9]\d{7,8}$/, { 
@@ -37,7 +35,6 @@ const formSchema = z.object({
   }),
 });
 
-// Define consistent types that match the schema definitions
 export type ClientEntryType = {
   clientName?: string;
   clientPhone?: string;
@@ -132,21 +129,29 @@ const InvoiceForm: React.FC = () => {
       
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
-      formData.append('documentType', activeTab); // Add the document type parameter
+      formData.append('documentType', activeTab);
       
       if (activeTab === 'invoices') {
-        // Send clientsData as a nested structure
+        const clientsData = clientEntries.map(entry => ({
+          clientName: entry.clientName || "",
+          clientPhone: entry.clientPhone || ""
+        }));
+        
+        formData.append('clientsData', JSON.stringify(clientsData));
+        
         clientEntries.forEach((entry, index) => {
-          formData.append(`clientsData[${index}][clientName]`, entry.clientName || "");
-          formData.append(`clientsData[${index}][clientPhone]`, entry.clientPhone || "");
-          formData.append(`invoices`, entry.invoice[0]);
+          formData.append(`invoices`, entry.invoice[0], entry.invoice[0].name);
         });
       } else {
-        // Send certificatesData with a similar structure to clientsData
+        const certificatesData = certificateEntries.map(entry => ({
+          certificateName: entry.certificateName,
+          issueDate: entry.issueDate || ""
+        }));
+        
+        formData.append('certificatesData', JSON.stringify(certificatesData));
+        
         certificateEntries.forEach((entry, index) => {
-          formData.append(`certificatesData[${index}][certificateName]`, entry.certificateName);
-          formData.append(`certificatesData[${index}][issueDate]`, entry.issueDate || "");
-          formData.append(`certificates`, entry.certificate[0]);
+          formData.append(`certificates`, entry.certificate[0], entry.certificate[0].name);
         });
       }
       
@@ -159,7 +164,6 @@ const InvoiceForm: React.FC = () => {
 
       setShowSuccessModal(true);
       
-      // Reset the form and entries
       if (activeTab === 'invoices') {
         setClientEntries([]);
       } else {
