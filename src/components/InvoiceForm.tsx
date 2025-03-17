@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -51,7 +50,7 @@ export type CertificateEntryType = {
 
 export type FormValues = z.infer<typeof formSchema>;
 
-type DocumentType = 'invoices' | 'certificates';
+type DocumentType = 'invoices' | 'certificates' | 'both';
 
 const InvoiceForm: React.FC = () => {
   const { toast } = useToast();
@@ -61,12 +60,10 @@ const InvoiceForm: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [activeTab, setActiveTab] = useState<DocumentType>('invoices');
   
-  // Boolean flags to track what's being sent
   const [hasInvoices, setHasInvoices] = useState(false);
   const [hasCertificates, setHasCertificates] = useState(false);
   const [successDocumentType, setSuccessDocumentType] = useState<DocumentType>('invoices');
 
-  // Update the flags when entries change
   useEffect(() => {
     setHasInvoices(clientEntries.length > 0);
     setHasCertificates(certificateEntries.length > 0);
@@ -101,7 +98,6 @@ const InvoiceForm: React.FC = () => {
   };
 
   const validateSubmission = (): boolean => {
-    // Check if either type of document is present
     if (!hasInvoices && !hasCertificates) {
       toast({
         title: "אין מסמכים לשליחה",
@@ -125,7 +121,6 @@ const InvoiceForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Set the success document type based on what's being sent
       if (hasInvoices && hasCertificates) {
         setSuccessDocumentType('both');
       } else if (hasInvoices) {
@@ -134,16 +129,12 @@ const InvoiceForm: React.FC = () => {
         setSuccessDocumentType('certificates');
       }
 
-      // Create the FormData object
       const formData = new FormData();
       
-      // Add professional details as separate fields
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      // Add data for invoices if present
       if (hasInvoices) {
-        // Create a JSON array of clients
         const clientsData = clientEntries.map(entry => ({
           clientName: entry.clientName || "",
           clientPhone: entry.clientPhone || ""
@@ -152,28 +143,23 @@ const InvoiceForm: React.FC = () => {
         formData.append('documentType', 'invoices');
         formData.append('clientsData', JSON.stringify(clientsData));
         
-        // Add all invoice files
         clientEntries.forEach((entry) => {
           formData.append(`invoices`, entry.invoice[0]);
         });
       }
       
-      // Add data for certificates if present
       if (hasCertificates) {
-        // Create a JSON array of certificates
         const certificatesData = certificateEntries.map(entry => ({
           certificateName: entry.certificateName,
           issueDate: entry.issueDate || ""
         }));
         
-        // If both are present, we're already adding invoices document type
         if (!hasInvoices) {
           formData.append('documentType', 'certificates');
         }
         
         formData.append('certificatesData', JSON.stringify(certificatesData));
         
-        // Add all certificate files
         certificateEntries.forEach((entry) => {
           formData.append(`certificates`, entry.certificate[0]);
         });
@@ -188,7 +174,6 @@ const InvoiceForm: React.FC = () => {
 
       setShowSuccessModal(true);
       
-      // Reset the relevant form entries based on what was sent
       if (hasInvoices) setClientEntries([]);
       if (hasCertificates) setCertificateEntries([]);
       
@@ -209,7 +194,6 @@ const InvoiceForm: React.FC = () => {
     }
   };
 
-  // Dynamically determine button text based on available documents
   const getSubmitButtonText = () => {
     if (isSubmitting) return "שולח...";
     
@@ -240,123 +224,4 @@ const InvoiceForm: React.FC = () => {
                   העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
                 </p>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
-                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והמומחיות שלך</li>
-                  <li>חשבוניות עבר מעידות על ניסיונך וסוג העבודות שביצעת</li>
-                  <li>כל המידע מאובטח ומשמש רק לצורכי דירוג במערכת</li>
-                </ul>
-                <div className="flex items-center text-sm text-ofair mt-4">
-                  <FileText className="h-4 w-4 mr-1" />
-                  <Link to="/terms" className="underline hover:text-ofair-dark">
-                    תקנון ותנאי שימוש
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <Tabs 
-              defaultValue="invoices" 
-              className="w-full"
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value as DocumentType)}
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="invoices" className="text-base py-3">העלאת חשבוניות</TabsTrigger>
-                <TabsTrigger value="certificates" className="text-base py-3">העלאת תעודות מקצועיות</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="invoices" className="space-y-8">
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-xl font-bold mb-6">העלאת חשבוניות</h2>
-                  <p className="text-gray-600 mb-6">באזור זה ניתן להעלות חשבוניות שביצעתם עבור לקוחות. ניתן להוסיף מספר חשבוניות בו-זמנית.</p>
-                  
-                  {clientEntries.length > 0 && (
-                    <div className="space-y-4 mb-8">
-                      <h3 className="text-lg font-medium">חשבוניות שהתווספו ({clientEntries.length})</h3>
-                      <div className="space-y-3">
-                        {clientEntries.map((entry, index) => (
-                          <ClientEntry 
-                            key={index} 
-                            entry={entry} 
-                            index={index} 
-                            onRemove={handleRemoveClientEntry} 
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <ClientEntryForm onAddEntry={handleAddClientEntry} />
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="certificates" className="space-y-8">
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-xl font-bold mb-6">העלאת תעודות מקצועיות</h2>
-                  <p className="text-gray-600 mb-6">באזור זה ניתן להעלות תעודות הסמכה מקצועיות ורישיונות. העלאת התעודות תסייע בתהליך האימות והרישום במערכת.</p>
-                  
-                  {certificateEntries.length > 0 && (
-                    <div className="space-y-4 mb-8">
-                      <h3 className="text-lg font-medium">תעודות שהתווספו ({certificateEntries.length})</h3>
-                      <div className="space-y-3">
-                        {certificateEntries.map((entry, index) => (
-                          <CertificateEntry 
-                            key={index} 
-                            entry={entry} 
-                            index={index} 
-                            onRemove={handleRemoveCertificateEntry} 
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="pt-4">
-              <p className="text-sm text-gray-500 mb-4">
-                בלחיצה על כפתור השליחה, הנך מאשר/ת כי קראת והסכמת ל<Link to="/terms" className="underline hover:text-ofair">תקנון ותנאי השימוש</Link> של פלטפורמת oFair.
-              </p>
-              <Button 
-                type="submit" 
-                className="w-full bg-ofair hover:bg-ofair-dark transition-colors text-base py-6" 
-                disabled={isSubmitting || (!hasInvoices && !hasCertificates)}
-              >
-                <Send className="h-5 w-5 ml-2" />
-                {getSubmitButtonText()}
-              </Button>
-              
-              {/* Show summary of documents ready to be sent */}
-              {(hasInvoices || hasCertificates) && (
-                <div className="mt-4 flex flex-col gap-2">
-                  {hasInvoices && (
-                    <div className="flex items-center text-sm text-green-600">
-                      <Check className="h-4 w-4 mr-1" />
-                      <span>{clientEntries.length} חשבוניות מוכנות לשליחה</span>
-                    </div>
-                  )}
-                  {hasCertificates && (
-                    <div className="flex items-center text-sm text-green-600">
-                      <Check className="h-4 w-4 mr-1" />
-                      <span>{certificateEntries.length} תעודות מקצועיות מוכנות לשליחה</span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </form>
-        </Form>
-      </div>
-
-      <SuccessModal 
-        isOpen={showSuccessModal} 
-        onClose={() => setShowSuccessModal(false)} 
-        documentType={successDocumentType}
-      />
-    </>
-  );
-};
-
-export default InvoiceForm;
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה וה
