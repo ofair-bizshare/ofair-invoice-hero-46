@@ -321,7 +321,7 @@ const InvoiceForm: React.FC = () => {
       </div>
       
       <SuccessModal
-        show={showSuccessModal}
+        isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         documentType={successDocumentType}
       />
