@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -224,4 +225,108 @@ const InvoiceForm: React.FC = () => {
                   העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
                 </p>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
-                  <li>מסמכים מקצועיים מוכיחים את ההכשרה וה
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והמומחיות שלך בתחומך</li>
+                  <li>חשבוניות מעידות על ניסיון וביצוע עבודות קודמות</li>
+                  <li>הדירוג הראשוני נקבע על סמך איכות וכמות המסמכים שהועלו</li>
+                </ul>
+                <p className="text-sm text-gray-600">
+                  על ידי העלאת מסמכים אתה מסכים <Link to="/terms" className="text-blue-600 hover:underline">לתנאי השימוש</Link> של הפלטפורמה.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <Tabs 
+                defaultValue="invoices" 
+                value={activeTab} 
+                onValueChange={(value) => setActiveTab(value as DocumentType)}
+                className="w-full"
+              >
+                <div className="bg-gray-50 border-b border-gray-200 px-4">
+                  <TabsList className="grid grid-cols-2">
+                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        <span>חשבוניות</span>
+                      </div>
+                    </TabsTrigger>
+                    <TabsTrigger value="certificates" className="data-[state=active]:bg-white">
+                      <div className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        <span>תעודות מקצועיות</span>
+                      </div>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                
+                <TabsContent value="invoices" className="p-4 space-y-4">
+                  <ClientEntryForm onAddEntry={handleAddClientEntry} />
+                  
+                  {clientEntries.length > 0 && (
+                    <div className="mt-6 space-y-3">
+                      <h3 className="text-md font-medium">חשבוניות שהועלו</h3>
+                      {clientEntries.map((entry, index) => (
+                        <ClientEntry
+                          key={index}
+                          entry={entry}
+                          index={index}
+                          onRemove={() => handleRemoveClientEntry(index)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="certificates" className="p-4 space-y-4">
+                  <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
+                  
+                  {certificateEntries.length > 0 && (
+                    <div className="mt-6 space-y-3">
+                      <h3 className="text-md font-medium">תעודות שהועלו</h3>
+                      {certificateEntries.map((entry, index) => (
+                        <CertificateEntry
+                          key={index}
+                          entry={entry}
+                          index={index}
+                          onRemove={() => handleRemoveCertificateEntry(index)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            </div>
+            
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || (!hasInvoices && !hasCertificates)}
+                className="flex items-center gap-2"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                    <span>שולח...</span>
+                  </div>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    <span>{getSubmitButtonText()}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+      
+      <SuccessModal
+        show={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        documentType={successDocumentType}
+      />
+    </>
+  );
+};
+
+export default InvoiceForm;
