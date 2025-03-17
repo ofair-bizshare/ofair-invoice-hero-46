@@ -146,8 +146,24 @@ const InvoiceForm: React.FC = () => {
       formData.append('documentType', 'invoices');
       formData.append('clientsData', JSON.stringify(clientsData));
       
-      clientEntries.forEach((entry) => {
-        formData.append(`invoices`, entry.invoice[0]);
+      clientEntries.forEach((entry, index) => {
+        // Get the file extension
+        const originalName = entry.invoice[0].name;
+        const extension = originalName.substring(originalName.lastIndexOf('.'));
+        
+        // Create a new name using the client name or a fallback
+        const fileName = entry.clientName ? 
+          `${entry.clientName}${extension}` : 
+          `חשבונית_${index + 1}${extension}`;
+        
+        // Create a new File object with the custom name
+        const file = new File(
+          [entry.invoice[0]],
+          fileName,
+          { type: entry.invoice[0].type }
+        );
+        
+        formData.append(`invoices`, file);
       });
         
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
@@ -198,7 +214,21 @@ const InvoiceForm: React.FC = () => {
       formData.append('certificatesData', JSON.stringify(certificatesData));
       
       certificateEntries.forEach((entry) => {
-        formData.append(`certificates`, entry.certificate[0]);
+        // Get the file extension
+        const originalName = entry.certificate[0].name;
+        const extension = originalName.substring(originalName.lastIndexOf('.'));
+        
+        // Create a new name using the certificate name
+        const fileName = `${entry.certificateName}${extension}`;
+        
+        // Create a new File object with the custom name
+        const file = new File(
+          [entry.certificate[0]],
+          fileName,
+          { type: entry.certificate[0].type }
+        );
+        
+        formData.append(`certificates`, file);
       });
         
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
