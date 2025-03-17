@@ -13,7 +13,6 @@ import ClientEntry from './invoiceForm/ClientEntry';
 import CertificateEntryForm from './invoiceForm/CertificateEntryForm';
 import CertificateEntry from './invoiceForm/CertificateEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from 'react-router-dom';
 
 const clientEntrySchema = z.object({
@@ -59,11 +58,10 @@ const InvoiceForm: React.FC = () => {
   const [clientEntries, setClientEntries] = useState<ClientEntryType[]>([]);
   const [certificateEntries, setCertificateEntries] = useState<CertificateEntryType[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<DocumentType>('invoices');
+  const [successDocumentType, setSuccessDocumentType] = useState<DocumentType>('invoices');
   
   const [hasInvoices, setHasInvoices] = useState(false);
   const [hasCertificates, setHasCertificates] = useState(false);
-  const [successDocumentType, setSuccessDocumentType] = useState<DocumentType>('invoices');
 
   useEffect(() => {
     setHasInvoices(clientEntries.length > 0);
@@ -98,14 +96,26 @@ const InvoiceForm: React.FC = () => {
     setCertificateEntries(updatedEntries);
   };
 
-  const validateSubmission = (): boolean => {
-    if (!hasInvoices && !hasCertificates) {
+  const validateSubmission = (type: 'invoices' | 'certificates'): boolean => {
+    if (type === 'invoices' && !hasInvoices) {
       toast({
-        title: "אין מסמכים לשליחה",
+        title: "אין חשבוניות לשליחה",
         description: (
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            <span>יש להוסיף לפחות מסמך אחד לשליחה (חשבונית או תעודה מקצועית)</span>
+            <span>יש להוסיף לפחות חשבונית אחת לשליחה</span>
+          </div>
+        ),
+        variant: "destructive",
+      });
+      return false;
+    } else if (type === 'certificates' && !hasCertificates) {
+      toast({
+        title: "אין תעודות לשליחה",
+        description: (
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>יש להוסיף לפחות תעודה אחת לשליחה</span>
           </div>
         ),
         variant: "destructive",
@@ -116,55 +126,29 @@ const InvoiceForm: React.FC = () => {
     return true;
   };
 
-  const onSubmit = async (data: FormValues) => {
-    if (!validateSubmission()) return;
+  const onSubmitInvoices = async (data: FormValues) => {
+    if (!validateSubmission('invoices')) return;
 
     setIsSubmitting(true);
 
     try {
-      if (hasInvoices && hasCertificates) {
-        setSuccessDocumentType('both');
-      } else if (hasInvoices) {
-        setSuccessDocumentType('invoices');
-      } else {
-        setSuccessDocumentType('certificates');
-      }
-
+      setSuccessDocumentType('invoices');
       const formData = new FormData();
       
       formData.append('professionalName', data.professionalName);
       formData.append('professionalPhone', data.professionalPhone);
       
-      if (hasInvoices) {
-        const clientsData = clientEntries.map(entry => ({
-          clientName: entry.clientName || "",
-          clientPhone: entry.clientPhone || ""
-        }));
-        
-        formData.append('documentType', 'invoices');
-        formData.append('clientsData', JSON.stringify(clientsData));
-        
-        clientEntries.forEach((entry) => {
-          formData.append(`invoices`, entry.invoice[0]);
-        });
-      }
+      const clientsData = clientEntries.map(entry => ({
+        clientName: entry.clientName || "",
+        clientPhone: entry.clientPhone || ""
+      }));
       
-      if (hasCertificates) {
-        const certificatesData = certificateEntries.map(entry => ({
-          certificateName: entry.certificateName,
-          issueDate: entry.issueDate || ""
-        }));
-        
-        if (!hasInvoices) {
-          formData.append('documentType', 'certificates');
-        }
-        
-        formData.append('certificatesData', JSON.stringify(certificatesData));
-        
-        certificateEntries.forEach((entry) => {
-          formData.append(`certificates`, entry.certificate[0]);
-        });
-      }
+      formData.append('documentType', 'invoices');
+      formData.append('clientsData', JSON.stringify(clientsData));
+      
+      clientEntries.forEach((entry) => {
+        formData.append(`invoices`, entry.invoice[0]);
+      });
         
       const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
         method: 'POST',
@@ -174,9 +158,7 @@ const InvoiceForm: React.FC = () => {
       if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
 
       setShowSuccessModal(true);
-      
-      if (hasInvoices) setClientEntries([]);
-      if (hasCertificates) setCertificateEntries([]);
+      setClientEntries([]);
       
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -195,25 +177,62 @@ const InvoiceForm: React.FC = () => {
     }
   };
 
-  const getSubmitButtonText = () => {
-    if (isSubmitting) return "שולח...";
-    
-    if (hasInvoices && hasCertificates) {
-      return `שלח ${clientEntries.length} חשבוניות ו-${certificateEntries.length} תעודות מקצועיות`;
-    } else if (hasInvoices) {
-      return `שלח ${clientEntries.length} חשבוניות`;
-    } else if (hasCertificates) {
-      return `שלח ${certificateEntries.length} תעודות מקצועיות`;
+  const onSubmitCertificates = async (data: FormValues) => {
+    if (!validateSubmission('certificates')) return;
+
+    setIsSubmitting(true);
+
+    try {
+      setSuccessDocumentType('certificates');
+      const formData = new FormData();
+      
+      formData.append('professionalName', data.professionalName);
+      formData.append('professionalPhone', data.professionalPhone);
+      
+      const certificatesData = certificateEntries.map(entry => ({
+        certificateName: entry.certificateName,
+        issueDate: entry.issueDate || ""
+      }));
+      
+      formData.append('documentType', 'certificates');
+      formData.append('certificatesData', JSON.stringify(certificatesData));
+      
+      certificateEntries.forEach((entry) => {
+        formData.append(`certificates`, entry.certificate[0]);
+      });
+        
+      const response = await fetch('https://hook.eu2.make.com/pe4x8bw7zt813js84ln78r4lwfh2gb99', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error('שגיאה בשליחת הנתונים');
+
+      setShowSuccessModal(true);
+      setCertificateEntries([]);
+      
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: "שגיאה בשליחה",
+        description: (
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <span>אנא נסו שוב מאוחר יותר</span>
+          </div>
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    return "שלח מסמכים";
   };
 
   return (
     <>
-      <div className="space-y-8">
+      <div className="space-y-8 text-right">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <ProfessionalDetails form={form} />
@@ -234,87 +253,103 @@ const InvoiceForm: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
+            {/* חשבוניות */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <Tabs 
-                defaultValue="invoices" 
-                value={activeTab} 
-                onValueChange={(value) => setActiveTab(value as DocumentType)}
-                className="w-full"
-              >
-                <div className="bg-gray-50 border-b border-gray-200 px-4">
-                  <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="invoices" className="data-[state=active]:bg-white">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        <span>חשבוניות</span>
-                      </div>
-                    </TabsTrigger>
-                    <TabsTrigger value="certificates" className="data-[state=active]:bg-white">
-                      <div className="flex items-center gap-2">
-                        <Check className="h-4 w-4" />
-                        <span>תעודות מקצועיות</span>
-                      </div>
-                    </TabsTrigger>
-                  </TabsList>
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2 font-medium">
+                  <FileText className="h-5 w-5 text-ofair" />
+                  <h3>חשבוניות</h3>
                 </div>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <ClientEntryForm onAddEntry={handleAddClientEntry} />
                 
-                <TabsContent value="invoices" className="p-4 space-y-4">
-                  <ClientEntryForm onAddEntry={handleAddClientEntry} />
-                  
-                  {clientEntries.length > 0 && (
-                    <div className="mt-6 space-y-3">
-                      <h3 className="text-md font-medium">חשבוניות שהועלו</h3>
-                      {clientEntries.map((entry, index) => (
-                        <ClientEntry
-                          key={index}
-                          entry={entry}
-                          index={index}
-                          onRemove={() => handleRemoveClientEntry(index)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="certificates" className="p-4 space-y-4">
-                  <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
-                  
-                  {certificateEntries.length > 0 && (
-                    <div className="mt-6 space-y-3">
-                      <h3 className="text-md font-medium">תעודות שהועלו</h3>
-                      {certificateEntries.map((entry, index) => (
-                        <CertificateEntry
-                          key={index}
-                          entry={entry}
-                          index={index}
-                          onRemove={() => handleRemoveCertificateEntry(index)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-            
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting || (!hasInvoices && !hasCertificates)}
-                className="flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                    <span>שולח...</span>
+                {clientEntries.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h3 className="text-md font-medium">חשבוניות שהועלו</h3>
+                    {clientEntries.map((entry, index) => (
+                      <ClientEntry
+                        key={index}
+                        entry={entry}
+                        index={index}
+                        onRemove={() => handleRemoveClientEntry(index)}
+                      />
+                    ))}
                   </div>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    <span>{getSubmitButtonText()}</span>
-                  </>
                 )}
-              </Button>
+
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    type="button" 
+                    onClick={() => form.handleSubmit(onSubmitInvoices)()}
+                    disabled={isSubmitting || !hasInvoices}
+                    className="flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                        <span>שולח...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        <span>{`שלח ${clientEntries.length} חשבוניות`}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* תעודות מקצועיות */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-8">
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2 font-medium">
+                  <Check className="h-5 w-5 text-ofair" />
+                  <h3>תעודות מקצועיות</h3>
+                </div>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
+                
+                {certificateEntries.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h3 className="text-md font-medium">תעודות שהועלו</h3>
+                    {certificateEntries.map((entry, index) => (
+                      <CertificateEntry
+                        key={index}
+                        entry={entry}
+                        index={index}
+                        onRemove={() => handleRemoveCertificateEntry(index)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    type="button" 
+                    onClick={() => form.handleSubmit(onSubmitCertificates)()}
+                    disabled={isSubmitting || !hasCertificates}
+                    className="flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                        <span>שולח...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        <span>{`שלח ${certificateEntries.length} תעודות מקצועיות`}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             </div>
           </form>
         </Form>
