@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -300,7 +299,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
                 </p>
                 
                 <div className="space-y-6">
-                  <ClientEntryForm onAddClientEntry={handleAddClientEntry} />
+                  <ClientEntryForm onAddEntry={handleAddClientEntry} />
                   
                   {clientEntries.length > 0 && (
                     <div className="mt-6 space-y-4">
@@ -310,6 +309,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
                           <ClientEntry 
                             key={index} 
                             entry={entry} 
+                            index={index}
                             onRemove={() => handleRemoveClientEntry(index)} 
                           />
                         ))}
@@ -341,7 +341,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
                 </p>
                 
                 <div className="space-y-6">
-                  <CertificateEntryForm onAddCertificateEntry={handleAddCertificateEntry} />
+                  <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
                   
                   {certificateEntries.length > 0 && (
                     <div className="mt-6 space-y-4">
@@ -351,6 +351,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
                           <CertificateEntry 
                             key={index} 
                             entry={entry} 
+                            index={index}
                             onRemove={() => handleRemoveCertificateEntry(index)} 
                           />
                         ))}
@@ -386,3 +387,4 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
 };
 
 export default InvoiceForm;
+
