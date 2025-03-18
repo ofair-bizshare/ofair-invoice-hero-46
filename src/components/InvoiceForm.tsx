@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -52,7 +51,11 @@ export type FormValues = z.infer<typeof formSchema>;
 
 type DocumentType = 'invoices' | 'certificates' | 'both';
 
-const InvoiceForm: React.FC = () => {
+interface InvoiceFormProps {
+  phoneFromUrl: string | null;
+}
+
+const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientEntries, setClientEntries] = useState<ClientEntryType[]>([]);
@@ -72,9 +75,16 @@ const InvoiceForm: React.FC = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       professionalName: "",
-      professionalPhone: "",
+      professionalPhone: phoneFromUrl || "",
     },
   });
+
+  // If phone from URL changes, update the form value
+  useEffect(() => {
+    if (phoneFromUrl) {
+      form.setValue('professionalPhone', phoneFromUrl);
+    }
+  }, [phoneFromUrl, form]);
 
   const handleAddClientEntry = (entry: ClientEntryType) => {
     setClientEntries([...clientEntries, entry]);
