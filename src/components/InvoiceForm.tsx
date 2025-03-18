@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -281,4 +282,107 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl, nameFromUrl }) 
                   העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
                 </p>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
-                  <li>מסמכים מקצועיים מוכיחים את ההכשרה וה
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והניסיון שלך</li>
+                  <li>חשבוניות מאפשרות לנו לבדוק את איכות השירות שאתה מספק ללקוחות</li>
+                  <li>ככל שתעלה יותר מסמכים, כך נוכל להעניק לך דירוג מדויק יותר</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  העלאת חשבוניות
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  העלה חשבוניות ללקוחות בכדי שנוכל להעריך את איכות השירות שאתה מספק. ניתן להעלות חשבוניות ללא פרטי לקוח.
+                </p>
+                
+                <div className="space-y-6">
+                  <ClientEntryForm onAddClientEntry={handleAddClientEntry} />
+                  
+                  {clientEntries.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                      <h3 className="text-lg font-medium">חשבוניות שהועלו:</h3>
+                      <div className="space-y-3">
+                        {clientEntries.map((entry, index) => (
+                          <ClientEntry 
+                            key={index} 
+                            entry={entry} 
+                            onRemove={() => handleRemoveClientEntry(index)} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4">
+                    <Button
+                      type="button"
+                      className="flex items-center gap-2"
+                      onClick={form.handleSubmit(onSubmitInvoices)}
+                      disabled={isSubmitting || !hasInvoices}
+                    >
+                      <Send className="h-4 w-4" />
+                      <span>שלח חשבוניות</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-8">
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  העלאת תעודות מקצועיות
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  העלה תעודות מקצועיות בכדי שנוכל להעריך את ההכשרה והניסיון שלך.
+                </p>
+                
+                <div className="space-y-6">
+                  <CertificateEntryForm onAddCertificateEntry={handleAddCertificateEntry} />
+                  
+                  {certificateEntries.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                      <h3 className="text-lg font-medium">תעודות שהועלו:</h3>
+                      <div className="space-y-3">
+                        {certificateEntries.map((entry, index) => (
+                          <CertificateEntry 
+                            key={index} 
+                            entry={entry} 
+                            onRemove={() => handleRemoveCertificateEntry(index)} 
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4">
+                    <Button
+                      type="button"
+                      className="flex items-center gap-2"
+                      onClick={form.handleSubmit(onSubmitCertificates)}
+                      disabled={isSubmitting || !hasCertificates}
+                    >
+                      <Send className="h-4 w-4" />
+                      <span>שלח תעודות</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </div>
+      
+      <SuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => setShowSuccessModal(false)} 
+        documentType={successDocumentType}
+      />
+    </>
+  );
+};
+
+export default InvoiceForm;
