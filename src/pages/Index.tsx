@@ -6,13 +6,20 @@ import InvoiceForm from '@/components/InvoiceForm';
 
 const Index = () => {
   const [phoneFromUrl, setPhoneFromUrl] = useState<string | null>(null);
+  const [nameFromUrl, setNameFromUrl] = useState<string | null>(null);
   const location = useLocation();
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const phone = queryParams.get('phone');
+    const name = queryParams.get('name');
+    
     if (phone) {
       setPhoneFromUrl(phone);
+    }
+    
+    if (name) {
+      setNameFromUrl(name);
     }
   }, [location]);
 
@@ -34,7 +41,7 @@ const Index = () => {
           </div>
           
           <div className="w-full bg-white shadow-lg rounded-xl p-6 md:p-8 border border-gray-100">
-            <InvoiceForm phoneFromUrl={phoneFromUrl} />
+            <InvoiceForm phoneFromUrl={phoneFromUrl} nameFromUrl={nameFromUrl} />
           </div>
         </main>
         
