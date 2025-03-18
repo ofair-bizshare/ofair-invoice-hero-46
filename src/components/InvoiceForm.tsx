@@ -1,16 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { AlertCircle, FileText, Send, Check } from 'lucide-react';
+import { AlertCircle, Check } from 'lucide-react';
 import ProfessionalDetails from './invoiceForm/ProfessionalDetails';
-import ClientEntryForm from './invoiceForm/ClientEntryForm';
-import ClientEntry from './invoiceForm/ClientEntry';
-import CertificateEntryForm from './invoiceForm/CertificateEntryForm';
-import CertificateEntry from './invoiceForm/CertificateEntry';
+import InvoiceSection from './invoiceForm/InvoiceSection';
+import CertificateSection from './invoiceForm/CertificateSection';
 import SuccessModal from './invoiceForm/SuccessModal';
 import { Link } from 'react-router-dom';
 
@@ -51,6 +49,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
   
   const [hasInvoices, setHasInvoices] = useState(false);
   const [hasCertificates, setHasCertificates] = useState(false);
+  const [activeTab, setActiveTab] = useState<'invoices' | 'certificates'>('invoices');
 
   useEffect(() => {
     setHasInvoices(clientEntries.length > 0);
@@ -263,4 +262,68 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
                   העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
                 </p>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
-                  <li>מסמכים מקצועיים מוכיחים את ההכשרה וה
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והניסיון שלך</li>
+                  <li>חשבוניות מאפשרות לנו לבדוק את איכות השירות שלך</li>
+                  <li>כל המסמכים נשמרים באופן מאובטח ובהתאם להוראות החוק</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="flex border-b border-gray-200">
+                <button
+                  type="button"
+                  className={`flex-1 py-3 font-medium text-center border-b-2 transition-colors ${
+                    activeTab === 'invoices' ? 'border-ofair text-ofair' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setActiveTab('invoices')}
+                >
+                  חשבוניות
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 py-3 font-medium text-center border-b-2 transition-colors ${
+                    activeTab === 'certificates' ? 'border-ofair text-ofair' : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                  onClick={() => setActiveTab('certificates')}
+                >
+                  תעודות
+                </button>
+              </div>
+              
+              <div className="p-6">
+                {activeTab === 'invoices' ? (
+                  <InvoiceSection 
+                    clientEntries={clientEntries}
+                    onAddClientEntry={handleAddClientEntry}
+                    onRemoveClientEntry={handleRemoveClientEntry}
+                    onSubmit={onSubmitInvoices}
+                    isSubmitting={isSubmitting}
+                    formData={form.getValues()}
+                  />
+                ) : (
+                  <CertificateSection 
+                    certificateEntries={certificateEntries}
+                    onAddCertificateEntry={handleAddCertificateEntry}
+                    onRemoveCertificateEntry={handleRemoveCertificateEntry}
+                    onSubmit={onSubmitCertificates}
+                    isSubmitting={isSubmitting}
+                    formData={form.getValues()}
+                  />
+                )}
+              </div>
+            </div>
+          </form>
+        </Form>
+      </div>
+      
+      <SuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => setShowSuccessModal(false)}
+        documentType={successDocumentType}
+      />
+    </>
+  );
+};
+
+export default InvoiceForm;
