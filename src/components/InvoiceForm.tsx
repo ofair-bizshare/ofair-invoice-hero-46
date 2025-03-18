@@ -1,16 +1,32 @@
-
 import React, { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { AlertCircle, Check } from 'lucide-react';
+import { AlertCircle, FileText, Send, Check } from 'lucide-react';
 import ProfessionalDetails from './invoiceForm/ProfessionalDetails';
-import InvoiceSection from './invoiceForm/InvoiceSection';
-import CertificateSection from './invoiceForm/CertificateSection';
+import ClientEntryForm from './invoiceForm/ClientEntryForm';
+import ClientEntry from './invoiceForm/ClientEntry';
+import CertificateEntryForm from './invoiceForm/CertificateEntryForm';
+import CertificateEntry from './invoiceForm/CertificateEntry';
 import SuccessModal from './invoiceForm/SuccessModal';
 import { Link } from 'react-router-dom';
+
+const clientEntrySchema = z.object({
+  clientName: z.string().optional(),
+  clientPhone: z.string().regex(/^0[2-9]\d{7,8}$/, { 
+    message: "מספר טלפון לא תקין, יש להזין מספר טלפון ישראלי תקין" 
+  }).optional(),
+  invoice: z.instanceof(FileList)
+});
+
+const certificateEntrySchema = z.object({
+  certificateName: z.string().min(2, { message: "יש להזין שם תעודה" }),
+  issueDate: z.string().optional(),
+  certificate: z.instanceof(FileList)
+});
 
 const formSchema = z.object({
   professionalName: z.string().min(2, { message: "יש להזין את שם בעל המקצוע" }),
@@ -49,7 +65,6 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
   
   const [hasInvoices, setHasInvoices] = useState(false);
   const [hasCertificates, setHasCertificates] = useState(false);
-  const [activeTab, setActiveTab] = useState<'invoices' | 'certificates'>('invoices');
 
   useEffect(() => {
     setHasInvoices(clientEntries.length > 0);
@@ -64,6 +79,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
     },
   });
 
+  // If phone from URL changes, update the form value
   useEffect(() => {
     if (phoneFromUrl) {
       form.setValue('professionalPhone', phoneFromUrl);
@@ -141,13 +157,16 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
       formData.append('clientsData', JSON.stringify(clientsData));
       
       clientEntries.forEach((entry, index) => {
+        // Get the file extension
         const originalName = entry.invoice[0].name;
         const extension = originalName.substring(originalName.lastIndexOf('.'));
         
+        // Create a new name using the client name or a fallback
         const fileName = entry.clientName ? 
           `${entry.clientName}${extension}` : 
           `חשבונית_${index + 1}${extension}`;
         
+        // Create a new File object with the custom name
         const file = new File(
           [entry.invoice[0]],
           fileName,
@@ -205,11 +224,14 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
       formData.append('certificatesData', JSON.stringify(certificatesData));
       
       certificateEntries.forEach((entry) => {
+        // Get the file extension
         const originalName = entry.certificate[0].name;
         const extension = originalName.substring(originalName.lastIndexOf('.'));
         
+        // Create a new name using the certificate name
         const fileName = `${entry.certificateName}${extension}`;
         
+        // Create a new File object with the custom name
         const file = new File(
           [entry.certificate[0]],
           fileName,
@@ -253,7 +275,7 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
           <form className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-6">
-                <ProfessionalDetails form={form} phoneFromUrl={phoneFromUrl} />
+                <ProfessionalDetails form={form} />
               </div>
               
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -262,63 +284,119 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ phoneFromUrl }) => {
                   העלאת מסמכים לפלטפורמת oFair מאפשרת לנו לבדוק את איכות השירות שלך ולהעניק לך דירוג ראשוני במערכת.
                 </p>
                 <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside mb-4">
-                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והניסיון שלך</li>
-                  <li>חשבוניות מאפשרות לנו לבדוק את איכות השירות שלך</li>
-                  <li>כל המסמכים נשמרים באופן מאובטח ובהתאם להוראות החוק</li>
+                  <li>מסמכים מקצועיים מוכיחים את ההכשרה והמומחיות שלך בתחומך</li>
+                  <li>חשבוניות מעידות על ניסיון וביצוע עבודות קודמות</li>
+                  <li>הדירוג הראשוני נקבע על סמך איכות וכמות המסמכים שהועלו</li>
                 </ul>
+                <p className="text-sm text-gray-600">
+                  על ידי העלאת מסמכים אתה מסכים <Link to="/terms" className="text-blue-600 hover:underline">לתנאי השימוש</Link> של הפלטפורמה.
+                </p>
               </div>
             </div>
 
+            {/* חשבוניות */}
             <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="flex border-b border-gray-200">
-                <button
-                  type="button"
-                  className={`flex-1 py-3 font-medium text-center border-b-2 transition-colors ${
-                    activeTab === 'invoices' ? 'border-ofair text-ofair' : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                  onClick={() => setActiveTab('invoices')}
-                >
-                  חשבוניות
-                </button>
-                <button
-                  type="button"
-                  className={`flex-1 py-3 font-medium text-center border-b-2 transition-colors ${
-                    activeTab === 'certificates' ? 'border-ofair text-ofair' : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                  onClick={() => setActiveTab('certificates')}
-                >
-                  תעודות
-                </button>
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2 font-medium">
+                  <FileText className="h-5 w-5 text-ofair" />
+                  <h3>חשבוניות</h3>
+                </div>
               </div>
               
-              <div className="p-6">
-                {activeTab === 'invoices' ? (
-                  <InvoiceSection 
-                    clientEntries={clientEntries}
-                    onAddClientEntry={handleAddClientEntry}
-                    onRemoveClientEntry={handleRemoveClientEntry}
-                    onSubmit={onSubmitInvoices}
-                    isSubmitting={isSubmitting}
-                    formData={form.getValues()}
-                  />
-                ) : (
-                  <CertificateSection 
-                    certificateEntries={certificateEntries}
-                    onAddCertificateEntry={handleAddCertificateEntry}
-                    onRemoveCertificateEntry={handleRemoveCertificateEntry}
-                    onSubmit={onSubmitCertificates}
-                    isSubmitting={isSubmitting}
-                    formData={form.getValues()}
-                  />
+              <div className="p-4 space-y-4">
+                <ClientEntryForm onAddEntry={handleAddClientEntry} />
+                
+                {clientEntries.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h3 className="text-md font-medium">חשבוניות שהועלו</h3>
+                    {clientEntries.map((entry, index) => (
+                      <ClientEntry
+                        key={index}
+                        entry={entry}
+                        index={index}
+                        onRemove={() => handleRemoveClientEntry(index)}
+                      />
+                    ))}
+                  </div>
                 )}
+
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    type="button" 
+                    onClick={() => form.handleSubmit(onSubmitInvoices)()}
+                    disabled={isSubmitting || !hasInvoices}
+                    className="flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                        <span>שולח...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        <span>{`שלח ${clientEntries.length} חשבוניות`}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* תעודות מקצועיות */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-8">
+              <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2 font-medium">
+                  <Check className="h-5 w-5 text-ofair" />
+                  <h3>תעודות מקצועיות</h3>
+                </div>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                <CertificateEntryForm onAddEntry={handleAddCertificateEntry} />
+                
+                {certificateEntries.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    <h3 className="text-md font-medium">תעודות שהועלו</h3>
+                    {certificateEntries.map((entry, index) => (
+                      <CertificateEntry
+                        key={index}
+                        entry={entry}
+                        index={index}
+                        onRemove={() => handleRemoveCertificateEntry(index)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex justify-end mt-4">
+                  <Button 
+                    type="button" 
+                    onClick={() => form.handleSubmit(onSubmitCertificates)()}
+                    disabled={isSubmitting || !hasCertificates}
+                    className="flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                        <span>שולח...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        <span>{`שלח ${certificateEntries.length} תעודות מקצועיות`}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           </form>
         </Form>
       </div>
       
-      <SuccessModal 
-        isOpen={showSuccessModal} 
+      <SuccessModal
+        isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         documentType={successDocumentType}
       />
